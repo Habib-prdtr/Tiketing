@@ -15,7 +15,7 @@ class Ticket extends Model
         'priority',
         'completed_at',
     ];
-
+ 
     public function user()
     {
         return $this->belongsTo(User::class);
