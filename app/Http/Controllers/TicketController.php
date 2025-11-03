@@ -12,8 +12,40 @@ use App\Http\Resources\TicketResource;
 class TicketController extends Controller
 {
     public function index(Request $request){
-        $query = Ticket::query();
-        $tickets = $query->where('user_id', auth()->user()->id)->get();
+        try {
+            $query = Ticket::query();
+            
+            $query->orderBy('created_at', 'desc');
+
+            if ($request->has('search')) {
+                $query->where('code', 'like', '%' . $request->search . '%')
+                    ->orWhere('title', 'like', '%' . $request->search . '%');
+            }
+
+            if ($request->status) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->priority) {
+                $query->where('priority', $request->priority);
+            }
+
+            if (auth()->user()->role == 'user') {
+                $query->where('user_id', auth()->user()->id);
+            }
+
+            $tickets = $query->paginate(10);
+
+            return response()->json([
+                'massage' => 'List Ticket',
+                'data' => TicketResource::collection($tickets)
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'massage' => 'Terjadi Kesalahan',
+                'data' => null,
+            ], 500);
+        }
     }
 
     public function store(TicketStoreRequest $request){
